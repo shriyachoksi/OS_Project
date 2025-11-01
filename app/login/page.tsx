@@ -1,0 +1,36 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/server";
+import { LoginForm } from "@/components/login-form";
+
+export default async function LoginPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  return (
+    <div className="relative min-h-screen overflow-hidden p-4">
+      {/* Ambient blobs */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-20 -left-16 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute -bottom-24 right-0 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-md mx-auto">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-gradient">
+            EduTrack
+          </h1>
+          <p className="text-muted-foreground">Your student activity portal</p>
+        </div>
+        <div className="gradient-border rounded-xl glass">
+          <LoginForm />
+        </div>
+      </div>
+    </div>
+  );
+}
