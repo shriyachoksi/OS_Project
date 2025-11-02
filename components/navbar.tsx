@@ -65,17 +65,13 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-[0_6px_20px_rgba(34,34,34,0.12)] bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] ring-1 ring-white/10">
-              <span className="text-white font-bold text-sm">ET</span>
-            </div>
-            <div className="hidden sm:flex flex-col">
-              <span className="font-bold text-lg text-foreground tracking-tight">
-                EduTrack
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Student Portal
-              </span>
-            </div>
+            {/* show the full logo on sm+ screens; ensure accessible text for screen readers */}
+            <img
+              src="/2.png"
+              alt="EduTrack Student Portal"
+              className="hidden sm:block h-16 md:h-32 mt-2 pr-3"
+            />
+            <span className="sr-only">EduTrack Student Portal</span>
           </Link>
 
           {/* Desktop Navigation */}

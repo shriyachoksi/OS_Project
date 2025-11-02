@@ -107,7 +107,11 @@ export function TimetableContent() {
               <div className="text-2xl font-semibold">{timetable.length}</div>
             </div>
             <div className="w-24 h-24 rounded-full bg-card/70 glass flex items-center justify-center shadow-md">
-              <span className="text-lg font-bold text-foreground">ET</span>
+              <img
+                src="/1sm.png"
+                alt="EduTrack Student Portal"
+                className="h-16 md:h-22 mt-1"
+              />
             </div>
           </div>
         </div>
