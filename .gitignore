@@ -15,10 +15,11 @@
 
 # next.js
 /.next/
-/out/
 
-# production
+# desktop app build files
 /build
+/dist/
+*.asar
 
 # misc
 .DS_Store
@@ -32,6 +33,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local 
 
 # vercel
 .vercel

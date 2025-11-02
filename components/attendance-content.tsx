@@ -205,59 +205,44 @@ export function AttendanceContent() {
     }
   };
 
-  /** 🗑️ Delete record */
+  /** 🗑️ Delete record - UPDATED FOR ELECTRON IPC */
   const handleDelete = async (recordId: string) => {
-    try {
+    // Check for Electron IPC availability
+    if (
+      typeof window !== "undefined" &&
+      window.electron?.supabase?.deleteAttendance
+    ) {
       if (!userId) return;
-      // Ask for confirmation in the browser
+
+      // Use custom modal or confirm for deletion confirmation
       if (!confirm("Are you sure you want to delete this attendance record?"))
         return;
 
       setProcessingId(recordId);
 
-      // Log current auth info to ensure we have a session in the browser
       try {
-        const { data: authData, error: authErr } =
-          await supabase.auth.getUser();
-        console.debug("Supabase auth.getUser() result:", { authData, authErr });
-      } catch (e) {
-        console.debug("Error calling auth.getUser():", e);
-      }
+        console.debug("Attempting soft-delete via Electron IPC", { recordId });
 
-      console.debug("Attempting server-side delete via API", {
-        recordId,
-        userId,
-      });
+        // 💡 REPLACE fetch call with IPC call
+        const res = await window.electron.supabase.deleteAttendance(recordId);
 
-      // Call server route to perform a soft-delete using the service role
-      try {
-        const res = await fetch("/api/delete-attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: recordId }),
-        });
-
-        const payload = await res.json();
-        console.debug(
-          "Server delete API response:",
-          payload,
-          "status:",
-          res.status
-        );
-
-        if (!res.ok) {
-          throw new Error(payload?.error || "Server delete failed");
+        if (res.error) {
+          throw new Error(res.error);
         }
 
         // Remove the record locally immediately, and refresh from server
         setAttendance((prev) => prev.filter((r) => r.id !== recordId));
         await fetchAttendance(userId);
-      } catch (e) {
-        console.error("Error calling server delete API:", e);
+      } catch (err) {
+        console.error("Error deleting attendance record via IPC:", err);
+      } finally {
+        setProcessingId(null);
       }
-    } catch (err) {
-      setProcessingId(null);
-      console.error("Error deleting attendance record:", err);
+    } else {
+      // Fallback or error handling for non-Electron environment
+      console.error(
+        "Electron IPC bridge not found for deleteAttendance. Cannot delete."
+      );
     }
   };
 

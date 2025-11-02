@@ -34,6 +34,7 @@ export function SignupForm() {
     setLoading(true);
 
     try {
+      // 1. Sign up the user with Supabase Auth
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -50,34 +51,48 @@ export function SignupForm() {
         return;
       }
 
-      // Try to sign the user in immediately so server can create a profile row
-      try {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+      // 2. Try to sign the user in immediately
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (signInError) {
-          // If sign-in isn't possible (email confirmation required), we'll still show success and let the user verify.
-          console.warn("Immediate sign-in after signup failed:", signInError);
-        } else {
-          // Call server API to create profile using service role (fire-and-forget)
-          try {
-            const resp = await fetch("/api/create-profile", {
-              method: "POST",
-              credentials: "same-origin",
-            });
-            if (!resp.ok)
-              console.warn("create-profile API returned", resp.status);
-          } catch (err) {
-            console.warn(
-              "Failed to call create-profile API after signup:",
-              err
-            );
+      if (signInError) {
+        // If sign-in isn't possible (e.g., email confirmation required),
+        // we'll still proceed to show success and redirect.
+        console.warn("Immediate sign-in after signup failed:", signInError);
+      }
+
+      // 3. If signed in, call the Electron IPC handler to create the profile row
+      const user = signInData?.user;
+
+      if (user && window.electron && window.electron.supabase.createProfile) {
+        try {
+          // Use electron IPC to perform the service role upsert securely
+          // Build a payload that matches the IPC's expected shape so `email` is always a string
+          const profilePayload = {
+            id: user.id,
+            email: user.email ?? email ?? "",
+            user_metadata: {
+              // prefer metadata from the user object if present, otherwise use the form fullName
+              full_name:
+                ((user as any).user_metadata &&
+                  (user as any).user_metadata.full_name) ||
+                fullName ||
+                "",
+            },
+          };
+
+          const res = await window.electron.supabase.createProfile(
+            profilePayload
+          );
+          if (res.error) {
+            console.warn("Electron create-profile failed:", res.error);
           }
+        } catch (err) {
+          console.warn("Error calling electron createProfile IPC:", err);
         }
-      } catch (err) {
-        console.warn("Error during post-signup sign-in/profile creation:", err);
       }
 
       setSuccess(true);

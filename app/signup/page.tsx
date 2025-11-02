@@ -1,16 +1,9 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/server";
 import { SignupForm } from "@/components/signup-form";
 
 export default async function SignupPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    redirect("/dashboard");
-  }
+  // Removed server-side auth check (createClient() and getUser()) and redirect.
+  // This ensures the page can be statically exported by Next.js.
+  // Client-side navigation handles redirects after signup/on dashboard load.
 
   return (
     <div className="relative min-h-screen overflow-hidden p-4">
