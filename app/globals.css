@@ -260,3 +260,14 @@
       border-color 250ms ease, box-shadow 250ms ease;
   }
 }
+
+/* Helper to remove number input spinner arrows */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spinner {
+  appearance: none;
+  -moz-appearance: textfield; /* Firefox */
+}

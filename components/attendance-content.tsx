@@ -5,7 +5,7 @@ import { createClient } from "@/lib/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, AlertCircle } from "lucide-react";
 import { AttendanceForm } from "./attendance-form";
 import type { Attendance } from "@/lib/types";
 
@@ -342,6 +342,31 @@ export function AttendanceContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(classWiseAttendance).map(([className, data]) => {
               const percentage = Math.round((data.present / data.total) * 100);
+
+              // If below threshold, calculate minimal classes to attend to get above 80%
+              const threshold = 0.8;
+              const needsHelp =
+                data.total > 0 ? data.present / data.total < threshold : true;
+
+              const classesNeeded = (() => {
+                if (!needsHelp) return 0;
+                // Solve for minimal integer x such that (p + x)/(t + x) > threshold
+                const p = data.present;
+                const t = data.total;
+                // x > (threshold * t - p) / (1 - threshold)
+                const raw = (threshold * t - p) / (1 - threshold);
+                const needed = Math.floor(raw) + 1;
+                return Math.max(0, needed);
+              })();
+
+              const projectedPct = classesNeeded
+                ? Math.round(
+                    ((data.present + classesNeeded) /
+                      (data.total + classesNeeded)) *
+                      100
+                  )
+                : percentage;
+
               return (
                 <Card key={className}>
                   <CardContent className="p-4">
@@ -360,6 +385,23 @@ export function AttendanceContent() {
                     <p className="text-xs text-muted-foreground mt-2">
                       {data.present} of {data.total} classes
                     </p>
+
+                    {needsHelp && (
+                      <div className="mt-3 flex items-start gap-2 text-sm text-yellow-700">
+                        <AlertCircle
+                          size={16}
+                          className="mt-0.5 text-yellow-700"
+                        />
+                        <div>
+                          <div className="font-medium">Low attendance</div>
+                          <div className="text-xs text-yellow-800">
+                            Attend the next <strong>{classesNeeded}</strong>{" "}
+                            class{classesNeeded > 1 ? "es" : ""} to get above
+                            80%.
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
