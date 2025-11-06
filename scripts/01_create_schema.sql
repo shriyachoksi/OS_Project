@@ -11,18 +11,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at timestamp DEFAULT now()
 );
 
--- Create tasks/todos table
-CREATE TABLE IF NOT EXISTS public.tasks (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  title text NOT NULL,
-  description text,
-  priority text DEFAULT 'medium',
-  status text DEFAULT 'pending',
-  due_date timestamp,
-  created_at timestamp DEFAULT now(),
-  updated_at timestamp DEFAULT now()
-);
+
 
 -- Create timetable table
 CREATE TABLE IF NOT EXISTS public.timetable (

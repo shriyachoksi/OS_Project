@@ -21,20 +21,38 @@
     "directories": {
       "output": "dist"
     },
+    "icon": "public/1.jpg",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/1.jpg"
+    },
     "files": [
       "out/**/*",
       "electron-main.js",
-      "package.json"
+      "preload.js",
+      "package.json",
+      "public/**/*"
     ],
     "extraResources": [
       {
         "from": ".env.production",
         "to": ".env.production"
       }
-    ]
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",
