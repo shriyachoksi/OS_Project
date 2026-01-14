@@ -67,31 +67,23 @@ export function SignupForm() {
       // 3. If signed in, call the Electron IPC handler to create the profile row
       const user = signInData?.user;
 
-      if (user && window.electron && window.electron.supabase.createProfile) {
+      if (user) {
         try {
-          // Use electron IPC to perform the service role upsert securely
-          // Build a payload that matches the IPC's expected shape so `email` is always a string
-          const profilePayload = {
-            id: user.id,
-            email: user.email ?? email ?? "",
-            user_metadata: {
-              // prefer metadata from the user object if present, otherwise use the form fullName
-              full_name:
-                ((user as any).user_metadata &&
-                  (user as any).user_metadata.full_name) ||
-                fullName ||
-                "",
-            },
-          };
+          // Call the server-side API route instead of Electron IPC
+          const res = await fetch("/api/create-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // The API route gets the user from the session cookie,
+            // so we don't necessarily need to send the payload if the route handles it via auth.getUser(),
+            // BUT your route creates the payload from the auth user, so an empty body or simple signal is fine.
+            // If your API route expects specific data, send it here.
+          });
 
-          const res = await window.electron.supabase.createProfile(
-            profilePayload
-          );
-          if (res.error) {
-            console.warn("Electron create-profile failed:", res.error);
+          if (!res.ok) {
+            console.warn("API create-profile failed:", await res.text());
           }
         } catch (err) {
-          console.warn("Error calling electron createProfile IPC:", err);
+          console.warn("Error calling create-profile API:", err);
         }
       }
 

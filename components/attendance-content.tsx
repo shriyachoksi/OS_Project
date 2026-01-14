@@ -180,8 +180,6 @@ export function AttendanceContent() {
     }
   };
 
-  // Delete functionality removed
-
   /** 🔄 Update status */
   const handleStatusUpdate = async (
     recordId: string,
@@ -205,44 +203,36 @@ export function AttendanceContent() {
     }
   };
 
-  /** 🗑️ Delete record - UPDATED FOR ELECTRON IPC */
   const handleDelete = async (recordId: string) => {
-    // Check for Electron IPC availability
-    if (
-      typeof window !== "undefined" &&
-      window.electron?.supabase?.deleteAttendance
-    ) {
-      if (!userId) return;
+    if (!userId) return;
 
-      // Use custom modal or confirm for deletion confirmation
-      if (!confirm("Are you sure you want to delete this attendance record?"))
-        return;
+    if (!confirm("Are you sure you want to delete this attendance record?"))
+      return;
 
-      setProcessingId(recordId);
+    setProcessingId(recordId);
 
-      try {
-        console.debug("Attempting soft-delete via Electron IPC", { recordId });
+    try {
+      // Call the server-side API route
+      const res = await fetch("/api/delete-attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: recordId }),
+      });
 
-        // 💡 REPLACE fetch call with IPC call
-        const res = await window.electron.supabase.deleteAttendance(recordId);
+      const data = await res.json();
 
-        if (res.error) {
-          throw new Error(res.error);
-        }
-
-        // Remove the record locally immediately, and refresh from server
-        setAttendance((prev) => prev.filter((r) => r.id !== recordId));
-        await fetchAttendance(userId);
-      } catch (err) {
-        console.error("Error deleting attendance record via IPC:", err);
-      } finally {
-        setProcessingId(null);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete");
       }
-    } else {
-      // Fallback or error handling for non-Electron environment
-      console.error(
-        "Electron IPC bridge not found for deleteAttendance. Cannot delete."
-      );
+
+      // Remove the record locally
+      setAttendance((prev) => prev.filter((r) => r.id !== recordId));
+      await fetchAttendance(userId);
+    } catch (err) {
+      console.error("Error deleting attendance record:", err);
+      alert("Failed to delete record");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -458,7 +448,7 @@ export function AttendanceContent() {
                         {record.class_name}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {new Date(record.date).toLocaleDateString()}
+                        {new Date(record.date).toLocaleDateString("en-GB")}
                       </td>
                       <td className="px-4 py-3">
                         <span

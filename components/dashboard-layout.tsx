@@ -25,41 +25,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Ensure the user's profile exists, using Electron IPC instead of the API route.
-      // This logic previously used Next.js API Route /api/create-profile.
-      if (
-        typeof window !== "undefined" &&
-        window.electron?.supabase?.createProfile
-      ) {
-        try {
-          // Fire-and-forget IPC call to create/upsert the profile via service role
-          // Build a payload that matches the IPC's expected shape so `email` is always a string
-          const profilePayload = {
-            id: user.id,
-            email: user.email ?? "",
-            user_metadata: {
-              // prefer metadata from the user object if present, otherwise empty string
-              full_name:
-                ((user as any).user_metadata &&
-                  (user as any).user_metadata.full_name) ||
-                "",
-            },
-          };
-          window.electron.supabase
-            .createProfile(profilePayload)
-            .then((res: any) => {
-              if (res?.error)
-                console.warn("IPC create-profile returned error:", res.error);
-            });
-        } catch (e) {
-          console.warn("Failed to call electron createProfile IPC:", e);
-        }
-      } else {
-        // Fallback for non-Electron environment (e.g., initial web dev setup)
-        // In the final desktop app, this block shouldn't be reached if preload.js is correct.
-        console.warn(
-          "Electron IPC bridge not available for createProfile. Skipping profile creation attempt."
-        );
+      // REFACTORED: Call the Next.js API route instead of Electron IPC
+      try {
+        // We don't need to send a payload; the API route determines the user
+        // securely from the server-side session.
+        await fetch("/api/create-profile", {
+          method: "POST",
+        });
+      } catch (e) {
+        console.warn("Failed to create profile via API:", e);
       }
 
       setLoading(false);

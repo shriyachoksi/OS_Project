@@ -5,8 +5,10 @@ import { createClient } from "@/lib/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Timetable } from "@/lib/types";
-import { Plus, Trash2, MapPin, User } from "lucide-react";
+import { Plus, Trash2, MapPin, User, Download } from "lucide-react";
 import { TimetableForm } from "./timetable-form";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const DAYS = [
   "Monday",
@@ -76,6 +78,59 @@ export function TimetableContent() {
       .sort((a, b) => a.start_time.localeCompare(b.start_time));
   };
 
+  const handleExportPDF = () => {
+    import("jspdf").then(({ default: jsPDF }) => {
+      import("jspdf-autotable").then(({ default: autoTable }) => {
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text("Weekly Timetable", 14, 20);
+
+        let yOffset = 30;
+
+        DAYS.forEach((day) => {
+          const dayClasses = getDayClasses(day);
+          if (dayClasses.length > 0) {
+            doc.setFontSize(14);
+            doc.text(day, 14, yOffset);
+            yOffset += 6;
+
+            const rows = dayClasses.map((c) => [
+              c.class_name,
+              `${c.start_time} - ${c.end_time}`,
+              c.room || "-",
+              c.instructor || "-",
+            ]);
+
+            (autoTable as any)(doc, {
+              head: [["Class Name", "Time", "Room", "Instructor"]],
+              body: rows,
+              startY: yOffset,
+              theme: "striped",
+              headStyles: { fillColor: [41, 128, 185] },
+              styles: { fontSize: 10 },
+            });
+
+            yOffset = (doc as any).lastAutoTable.finalY + 10;
+          }
+        });
+
+        // ✅ Save instead of opening in new tab
+        doc.save("timetable.pdf");
+      });
+    });
+  };
+
+  // simple HTML escaper for values placed into the export HTML
+  const escapeHtml = (str?: string) => {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-10">
       {/* Premium Hero */}
@@ -95,8 +150,13 @@ export function TimetableContent() {
                 <Plus size={18} />
                 Add Class
               </Button>
-              <Button variant="ghost" size="sm" className="gap-2">
-                Export
+              <Button
+                onClick={handleExportPDF}
+                variant="ghost"
+                size="sm"
+                className="gap-2"
+              >
+                <Download size={18} /> Export as PDF
               </Button>
             </div>
           </div>
