@@ -64,12 +64,10 @@ export function SignupForm() {
         console.warn("Immediate sign-in after signup failed:", signInError);
       }
 
-      // 3. If signed in, call the Electron IPC handler to create the profile row
       const user = signInData?.user;
 
       if (user) {
         try {
-          // Call the server-side API route instead of Electron IPC
           const res = await fetch("/api/create-profile", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
